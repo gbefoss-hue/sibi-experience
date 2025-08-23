@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elige tu propia experiencia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FDF0D5; /* Crema de fondo */
+            --primary-color: #C6D8D3; /* Verde agua claro */
+            --secondary-color: #F05941; /* Naranja/Rojo */
+            --accent-color: #5EAAA8; /* Verde agua oscuro */
+            --text-color: #333333; /* Texto oscuro */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.5s ease;
+        }
+        
+        .game-title {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .game-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            min-height: 100px;
+        }
+        
+        .final-emoji {
+            font-size: 5rem;
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .choices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .choice-button {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border-bottom: 4px solid rgba(0,0,0,0.2);
+        }
+
+        .choice-button:hover {
+            transform: translateY(-3px);
+            background-color: var(--secondary-color);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        
+        .choice-button:active {
+            transform: translateY(0);
+            border-bottom-width: 2px;
+        }
+        
+        .start-button {
+             background-color: var(--secondary-color);
+        }
+
+        #feedback-message {
+            margin-top: 20px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            min-height: 24px;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .game-container {
+                padding: 20px;
+            }
+            .game-title {
+                font-size: 2rem;
+            }
+            .game-text {
+                font-size: 1rem;
+            }
+            .choice-button {
+                font-size: 1rem;
+                padding: 12px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1 id="game-title" class="game-title">Título del Juego</h1>
+        <div id="final-emoji-container"></div>
+        <p id="game-text" class="game-text">Texto de la situación...</p>
+        <div id="choices-container" class="choices-container">
+            </div>
+        <div id="feedback-message"></div>
+    </div>
+
+    <script>
+        // --- ELEMENTOS DEL JUEGO ---
+        const gameTitleEl = document.getElementById('game-title');
+        const gameTextEl = document.getElementById('game-text');
+        const choicesContainerEl = document.getElementById('choices-container');
+        const feedbackMessageEl = document.getElementById('feedback-message');
+        const finalEmojiContainerEl = document.getElementById('final-emoji-container');
+
+        // --- CEREBRO DEL JUEGO: Aquí está toda la historia y las decisiones ---
+        const gameData = [
+            // Pantalla 0: Introducción
+            {
+                type: 'intro',
+                title: 'Elige tu propia experiencia',
+                text: 'A ver, Sibila. Llegó tu hora. Sabes cómo funciona esto. Es el "Año de las Experiencias" y, como toda Siniestra, no vas a zafar, tu turno en el calendario ha sido marcado. Pero en este caso, las Siniestras han decidido que tú tienes "coronita". Sí, leíste bien. Después de tanto organizar para las demás, vos vas a tener el poder de guiar ALGUNAS COSAS de tu propia experiencia, a partir de como resuelvas las siguientes situaciones…',
+                choices: [{ text: 'Que empiece la tortura...', target: 1 }]
+            },
+            // Pantalla 1: Situación #1
+            {
+                type: 'choice',
+                title: 'SITUACIÓN #1',
+                text: 'Después de una semana larguísima, llegas a tu casa y descubres una puerta que nunca antes habías visto. La abres y en el centro hay algo que te llama la atención. ¿Qué es?',
+                choices: [
+                    { text: 'Una bola de espejos escuchando "aaaay nena..."', target: 2 },
+                    { text: 'Un sillón que susurra "sentate y contá todo..."', target: 2 },
+                    { text: 'Un jacuzzi y un masaje facial en absoluto silencio', target: 2 }
+                ]
+            },
+            // Pantalla 2: Situación #2
+            {
+                type: 'choice',
+                title: 'SITUACIÓN #2',
+                text: 'Estás en medio de un sueño rarísimo. Te persigue algo (podría ser la boleta de UTE). Llegas al borde de un acantilado. ¿Qué haces?',
+                choices: [
+                    { text: 'Correr a la velocidad de la luz por el borde', target: 3 },
+                    { text: 'Saltar al vacío y empezar a volar', target: 3 },
+                    { text: 'Zambullirte en el mar y nadar hacia una cueva', target: 3 }
+                ]
+            },
+            // Pantalla 3: Situación #3
+            {
+                type: 'choice',
+                title: 'SITUACIÓN #3',
+                text: 'Una botella llega a la orilla. Adentro hay un papelito que dice: "Sé tu secreto: sigues llevando la cuenta de quién no sabe pagar la luz, el agua y el gas". ¿Qué hacés?',
+                choices: [
+                    { text: 'Salir corriendo, ¡me han descubierto!', target: 4 },
+                    { text: 'Escribir "ok, ahora contame uno tuyo" y devolverla', target: 4 },
+                    { text: 'Pensar "alguien tiene que ser la adulta aquí"', target: 4 }
+                ]
+            },
+            // Pantalla 4: Prueba de Actitud
+            {
+                type: 'choice',
+                title: 'LA HORA DE LA VERDAD',
+                text: 'Tus amigas idearon diversas experiencias, dependiendo de tu próxima respuesta y los resultados de este juego va a ser la definitiva.',
+                choices: [
+                    { text: 'Odio la experiencia, no cuenten conmigo.', target: 'error', message: 'Respuesta incorrecta. Reglamento Siniestro, Art. 3: "no zafa nadie".' },
+                    { text: 'Yo ya dije exactamente lo que quiero, dejen de inventar.', target: 'error', message: 'Error. Tu "coronita" es para guiar, no para dar órdenes.' },
+                    { text: 'Bua... claramente no voy a poder zafar... Por lo menos elijo la fecha...', target: 5 }
+                ]
+            },
+            // Pantalla 5: ¡NUEVA VERSIÓN DE LA VERIFICACIÓN!
+            {
+                type: 'choice',
+                title: 'ÚLTIMA VERIFICACIÓN',
+                text: 'Ok, Sibila. El plan está en marcha. La fecha tentativa es el <strong>VIERNES 24 y SÁBADO 25 DE OCTUBRE</strong>. Por favor, revisa tu agenda real y confirma tu disponibilidad. Esta respuesta es en serio.',
+                choices: [
+                     { text: '¡Sí, tengo disponibilidad!', target: 6 }, // Lleva al final feliz
+                     { text: 'Mierda, ese finde no puedo', target: 7 }  // Lleva al final triste
+                ]
+            },
+            // Pantalla 6: FINAL FELIZ
+            {
+                type: 'end',
+                title: '¡AGENDADO!',
+                emoji: '🥳',
+                text: 'Siiii agendado!! <br><br>Ahora sí, saca captura de esto y mándala al grupo para sellar el pacto. ¡Se festeja!',
+                choices: []
+            },
+            // Pantalla 7: FINAL TRISTE
+            {
+                type: 'end',
+                title: '¡ALARMA SINIESTRA!',
+                emoji: '😢',
+                text: 'Mierda, ese finde no puedo. <br><br>Ok, no entres en pánico. Saca captura de esta pantalla y envíala URGENTE al grupo para que Las Siniestras activen un plan B.',
+                choices: []
+            }
+        ];
+
+        let currentScreen = 0;
+
+        function renderScreen(screenIndex) {
+            const screenData = gameData[screenIndex];
+            const container = document.querySelector('.game-container');
+            container.style.opacity = 0;
+
+            setTimeout(() => {
+                gameTitleEl.innerText = screenData.title;
+                gameTextEl.innerHTML = screenData.text;
+                choicesContainerEl.innerHTML = '';
+                finalEmojiContainerEl.innerHTML = ''; // Limpiar el emoji
+
+                if(screenData.type === 'end' && screenData.emoji) {
+                    const emojiEl = document.createElement('span');
+                    emojiEl.className = 'final-emoji';
+                    emojiEl.innerText = screenData.emoji;
+                    finalEmojiContainerEl.appendChild(emojiEl);
+                }
+
+                if (screenData.type !== 'end') {
+                     screenData.choices.forEach(choice => {
+                        const button = document.createElement('button');
+                        button.className = 'choice-button';
+                        if (screenData.type === 'intro') {
+                            button.classList.add('start-button');
+                        }
+                        button.innerText = choice.text;
+                        button.onclick = () => handleChoice(choice);
+                        choicesContainerEl.appendChild(button);
+                    });
+                }
+                container.style.opacity = 1;
+            }, 300);
+        }
+
+        function handleChoice(choice) {
+            if (choice.target === 'error') {
+                feedbackMessageEl.innerText = choice.message;
+                feedbackMessageEl.style.opacity = 1;
+                setTimeout(() => {
+                    feedbackMessageEl.style.opacity = 0;
+                }, 3000);
+            } else {
+                currentScreen = choice.target;
+                renderScreen(currentScreen);
+            }
+        }
+        
+        // Iniciar el juego
+        renderScreen(currentScreen);
+    </script>
+
+</body>
+</html>
