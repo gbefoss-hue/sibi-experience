@@ -6,7 +6,7 @@
     <title>Elige tu propia experiencia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght=400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #FDF0D5; /* Crema de fondo */
@@ -107,6 +107,71 @@
             min-height: 24px;
         }
         
+        /* Estilos del Calendario */
+        .calendar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .month {
+            width: 100%;
+            max-width: 300px; /* Para que no se haga enorme en pantallas grandes */
+            background-color: #f7f7f7;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+        .month h3 {
+            font-size: 1.4rem;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+        .weekdays, .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .weekday-item, .day-item {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            background-color: #eee;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .day-item {
+            background-color: #fff;
+            color: var(--text-color);
+            border: 1px solid #ddd;
+        }
+        .day-item.empty {
+            background-color: transparent;
+            border: none;
+            cursor: default;
+        }
+        .day-item.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .day-item:not(.empty):hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        .instructions-final {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -124,6 +189,13 @@
                 font-size: 1rem;
                 padding: 12px 15px;
             }
+            .month h3 {
+                font-size: 1.2rem;
+            }
+            .weekday-item, .day-item {
+                font-size: 0.8rem;
+                padding: 6px 0;
+            }
         }
     </style>
 </head>
@@ -135,6 +207,8 @@
         <p id="game-text" class="game-text">Texto de la situación...</p>
         <div id="choices-container" class="choices-container">
             </div>
+        <div id="calendar-view" class="calendar-container" style="display: none;">
+            </div>
         <div id="feedback-message"></div>
     </div>
 
@@ -145,6 +219,9 @@
         const choicesContainerEl = document.getElementById('choices-container');
         const feedbackMessageEl = document.getElementById('feedback-message');
         const finalEmojiContainerEl = document.getElementById('final-emoji-container');
+        const calendarViewEl = document.getElementById('calendar-view');
+
+        let selectedDates = []; // Para almacenar las fechas que Sibila seleccione
 
         // --- CEREBRO DEL JUEGO: Aquí está toda la historia y las decisiones ---
         const gameData = [
@@ -199,31 +276,12 @@
                     { text: 'Bua... claramente no voy a poder zafar... Por lo menos elijo la fecha...', target: 5 }
                 ]
             },
-            // Pantalla 5: ¡NUEVA VERSIÓN DE LA VERIFICACIÓN!
+            // Pantalla 5: ¡VERSIÓN CON CALENDARIO!
             {
-                type: 'choice',
-                title: 'ÚLTIMA VERIFICACIÓN',
-                text: 'Ok, Sibila. El plan está en marcha. La fecha tentativa es el <strong>VIERNES 24 y SÁBADO 25 DE OCTUBRE</strong>. Por favor, revisa tu agenda real y confirma tu disponibilidad. Esta respuesta es en serio.',
-                choices: [
-                     { text: '¡Sí, tengo disponibilidad!', target: 6 }, // Lleva al final feliz
-                     { text: 'Mierda, ese finde no puedo', target: 7 }  // Lleva al final triste
-                ]
-            },
-            // Pantalla 6: FINAL FELIZ
-            {
-                type: 'end',
-                title: '¡AGENDADO!',
-                emoji: '🥳',
-                text: 'Siiii agendado!! <br><br>Ahora sí, saca captura de esto y mándala al grupo para sellar el pacto. ¡Se festeja!',
-                choices: []
-            },
-            // Pantalla 7: FINAL TRISTE
-            {
-                type: 'end',
-                title: '¡ALARMA SINIESTRA!',
-                emoji: '😢',
-                text: 'Mierda, ese finde no puedo. <br><br>Ok, no entres en pánico. Saca captura de esta pantalla y envíala URGENTE al grupo para que Las Siniestras activen un plan B.',
-                choices: []
+                type: 'calendar',
+                title: 'TU AGENDA SINIESTRA',
+                text: '¡Esa es la actitud! Has superado las pruebas. Ahora, con tu "coronita", selecciona en el calendario los días de Octubre y Noviembre en los que tendrías **realmente disponibilidad** para tu experiencia. Selecciona todos los que te sirvan.',
+                // No hay 'choices' aquí porque se generan dinámicamente
             }
         ];
 
@@ -240,6 +298,35 @@
                 choicesContainerEl.innerHTML = '';
                 finalEmojiContainerEl.innerHTML = ''; // Limpiar el emoji
 
+                // Mostrar/Ocultar el calendario según el tipo de pantalla
+                if (screenData.type === 'calendar') {
+                    choicesContainerEl.style.display = 'none'; // Ocultar botones de elección
+                    calendarViewEl.style.display = 'flex'; // Mostrar el contenedor del calendario
+                    renderCalendar(new Date().getFullYear(), 9); // Octubre (mes 9 en JS)
+                    renderCalendar(new Date().getFullYear(), 10); // Noviembre (mes 10 en JS)
+                     const instructions = document.createElement('p');
+                    instructions.className = 'instructions-final';
+                    instructions.innerHTML = '<br>Cuando termines de seleccionar, <strong>SACA UNA CAPTURA DE PANTALLA</strong> de este calendario y envíala al grupo.<br>¡No hay vuelta atrás! Las siniestras eligirán la fecha y te la comunicarán a la brevedad';
+                    calendarViewEl.appendChild(instructions);
+
+                } else {
+                    choicesContainerEl.style.display = 'flex'; // Mostrar botones de elección
+                    calendarViewEl.style.display = 'none'; // Ocultar el calendario
+                    if (screenData.type !== 'end') { // Si no es una pantalla final con emoji
+                         screenData.choices.forEach(choice => {
+                            const button = document.createElement('button');
+                            button.className = 'choice-button';
+                            if (screenData.type === 'intro') {
+                                button.classList.add('start-button');
+                            }
+                            button.innerText = choice.text;
+                            button.onclick = () => handleChoice(choice);
+                            choicesContainerEl.appendChild(button);
+                        });
+                    }
+                }
+                
+                // Si es una pantalla final (que ya no tendremos con emoji, pero se mantiene la lógica)
                 if(screenData.type === 'end' && screenData.emoji) {
                     const emojiEl = document.createElement('span');
                     emojiEl.className = 'final-emoji';
@@ -247,18 +334,6 @@
                     finalEmojiContainerEl.appendChild(emojiEl);
                 }
 
-                if (screenData.type !== 'end') {
-                     screenData.choices.forEach(choice => {
-                        const button = document.createElement('button');
-                        button.className = 'choice-button';
-                        if (screenData.type === 'intro') {
-                            button.classList.add('start-button');
-                        }
-                        button.innerText = choice.text;
-                        button.onclick = () => handleChoice(choice);
-                        choicesContainerEl.appendChild(button);
-                    });
-                }
                 container.style.opacity = 1;
             }, 300);
         }
@@ -274,6 +349,67 @@
                 currentScreen = choice.target;
                 renderScreen(currentScreen);
             }
+        }
+
+        function renderCalendar(year, month) {
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const weekdays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const numDays = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+
+            const monthDiv = document.createElement('div');
+            monthDiv.className = 'month';
+            monthDiv.innerHTML = `<h3>${monthNames[month]} ${year}</h3>`;
+
+            const weekdaysDiv = document.createElement('div');
+            weekdaysDiv.className = 'weekdays';
+            weekdays.forEach(day => {
+                const weekdayItem = document.createElement('div');
+                weekdayItem.className = 'weekday-item';
+                weekdayItem.innerText = day;
+                weekdaysDiv.appendChild(weekdayItem);
+            });
+            monthDiv.appendChild(weekdaysDiv);
+
+            const daysDiv = document.createElement('div');
+            daysDiv.className = 'days';
+
+            // Días vacíos al principio del mes
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'day-item empty';
+                daysDiv.appendChild(emptyDay);
+            }
+
+            // Días del mes
+            for (let day = 1; day <= numDays; day++) {
+                const dayItem = document.createElement('div');
+                dayItem.className = 'day-item';
+                dayItem.innerText = day;
+                dayItem.dataset.date = `${year}-${month + 1}-${day}`; // Formato YYYY-MM-DD
+                
+                if (selectedDates.includes(dayItem.dataset.date)) {
+                    dayItem.classList.add('selected');
+                }
+
+                dayItem.onclick = () => {
+                    dayItem.classList.toggle('selected');
+                    const dateIndex = selectedDates.indexOf(dayItem.dataset.date);
+                    if (dateIndex > -1) {
+                        selectedDates.splice(dateIndex, 1); // Deseleccionar
+                    } else {
+                        selectedDates.push(dayItem.dataset.date); // Seleccionar
+                    }
+                    console.log('Fechas seleccionadas:', selectedDates); // Para depuración
+                };
+                daysDiv.appendChild(dayItem);
+            }
+            monthDiv.appendChild(daysDiv);
+            calendarViewEl.appendChild(monthDiv);
         }
         
         // Iniciar el juego
