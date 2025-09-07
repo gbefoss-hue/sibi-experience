@@ -6,14 +6,14 @@
     <title>Elige tu propia experiencia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght=400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #FDF0D5; /* Crema de fondo */
-            --primary-color: #C6D8D3; /* Verde agua claro */
-            --secondary-color: #F05941; /* Naranja/Rojo */
-            --accent-color: #5EAAA8; /* Verde agua oscuro */
-            --text-color: #333333; /* Texto oscuro */
+            --bg-color: #FDF0D5;
+            --primary-color: #C6D8D3;
+            --secondary-color: #F05941;
+            --accent-color: #5EAAA8;
+            --text-color: #333333;
         }
 
         * {
@@ -26,11 +26,7 @@
             font-family: 'Fredoka', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+            /* CAMBIO CLAVE: Se eliminan las propiedades flex para un control más simple */
         }
 
         .game-container {
@@ -42,6 +38,8 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
             transition: all 0.5s ease;
+            /* CAMBIO CLAVE: 'auto' centra horizontalmente y 5vh da margen arriba y abajo */
+            margin: 5vh auto; 
         }
         
         .game-title {
@@ -54,7 +52,6 @@
             font-size: 1.2rem;
             line-height: 1.6;
             margin-bottom: 30px;
-            min-height: 100px;
         }
         
         .final-emoji {
@@ -94,8 +91,11 @@
             border-bottom-width: 2px;
         }
         
-        .start-button {
+        .start-button, #send-whatsapp-btn {
              background-color: var(--secondary-color);
+        }
+        #send-whatsapp-btn {
+            margin-top: 20px;
         }
 
         #feedback-message {
@@ -117,7 +117,7 @@
         }
         .month {
             width: 100%;
-            max-width: 300px; /* Para que no se haga enorme en pantallas grandes */
+            max-width: 300px;
             background-color: #f7f7f7;
             border-radius: 10px;
             padding: 15px;
@@ -178,6 +178,7 @@
             }
             .game-container {
                 padding: 20px;
+                margin: 2vh auto;
             }
             .game-title {
                 font-size: 2rem;
@@ -203,12 +204,12 @@
 
     <div class="game-container">
         <h1 id="game-title" class="game-title">Título del Juego</h1>
-        <div id="final-emoji-container"></div>
         <p id="game-text" class="game-text">Texto de la situación...</p>
         <div id="choices-container" class="choices-container">
             </div>
         <div id="calendar-view" class="calendar-container" style="display: none;">
-            </div>
+            
+        </div>
         <div id="feedback-message"></div>
     </div>
 
@@ -218,10 +219,10 @@
         const gameTextEl = document.getElementById('game-text');
         const choicesContainerEl = document.getElementById('choices-container');
         const feedbackMessageEl = document.getElementById('feedback-message');
-        const finalEmojiContainerEl = document.getElementById('final-emoji-container');
         const calendarViewEl = document.getElementById('calendar-view');
 
-        let selectedDates = []; // Para almacenar las fechas que Sibila seleccione
+        let selectedDates = []; 
+        let userChoices = {}; 
 
         // --- CEREBRO DEL JUEGO: Aquí está toda la historia y las decisiones ---
         const gameData = [
@@ -238,9 +239,9 @@
                 title: 'SITUACIÓN #1',
                 text: 'Después de una semana larguísima, llegas a tu casa y descubres una puerta que nunca antes habías visto. La abres y en el centro hay algo que te llama la atención. ¿Qué es?',
                 choices: [
-                    { text: 'Una bola de espejos escuchando "aaaay nena..."', target: 2 },
-                    { text: 'Un sillón que susurra "sentate y contá todo..."', target: 2 },
-                    { text: 'Un jacuzzi y un masaje facial en absoluto silencio', target: 2 }
+                    { text: 'Una bola de espejos escuchando "aaaay nena..."', target: 2, keyword: 'un poco de fiesta' },
+                    { text: 'Un sillón que susurra "sentate y contá todo..."', target: 2, keyword: 'mucha charla' },
+                    { text: 'Un jacuzzi y un masaje facial en absoluto silencio', target: 2, keyword: 'bastante relax' }
                 ]
             },
             // Pantalla 2: Situación #2
@@ -249,9 +250,9 @@
                 title: 'SITUACIÓN #2',
                 text: 'Estás en medio de un sueño rarísimo. Te persigue algo (podría ser la boleta de UTE). Llegas al borde de un acantilado. ¿Qué haces?',
                 choices: [
-                    { text: 'Correr a la velocidad de la luz por el borde', target: 3 },
-                    { text: 'Saltar al vacío y empezar a volar', target: 3 },
-                    { text: 'Zambullirte en el mar y nadar hacia una cueva', target: 3 }
+                    { text: 'Correr a la velocidad de la luz por el borde', target: 3, keyword: 'escapar de todo' },
+                    { text: 'Saltar al vacío y empezar a volar', target: 3, keyword: 'experimentar sin miedo' },
+                    { text: 'Zambullirte en el mar y nadar...', target: 3, keyword: 'entregarme a la situación' }
                 ]
             },
             // Pantalla 3: Situación #3
@@ -276,12 +277,11 @@
                     { text: 'Bua... claramente no voy a poder zafar... Por lo menos elijo la fecha...', target: 5 }
                 ]
             },
-            // Pantalla 5: ¡VERSIÓN CON CALENDARIO!
+            // Pantalla 5: ¡VERSIÓN CON CALENDARIO Y BOTÓN DE WHATSAPP!
             {
                 type: 'calendar',
                 title: 'TU AGENDA SINIESTRA',
-                text: '¡Esa es la actitud! Has superado las pruebas. Ahora, con tu "coronita", selecciona en el calendario los días de Octubre y Noviembre en los que tendrías **realmente disponibilidad** para tu experiencia. Selecciona todos los que te sirvan.',
-                // No hay 'choices' aquí porque se generan dinámicamente
+                text: '¡Esa es la actitud! Has superado las pruebas. Ahora, con tu "coronita", selecciona en el calendario los días de Octubre y Noviembre en los que tendrías <strong>realmente disponibilidad</strong> para tu experiencia. Selecciona todos los que te sirvan.',
             }
         ];
 
@@ -296,49 +296,44 @@
                 gameTitleEl.innerText = screenData.title;
                 gameTextEl.innerHTML = screenData.text;
                 choicesContainerEl.innerHTML = '';
-                finalEmojiContainerEl.innerHTML = ''; // Limpiar el emoji
+                calendarViewEl.innerHTML = ''; 
 
-                // Mostrar/Ocultar el calendario según el tipo de pantalla
                 if (screenData.type === 'calendar') {
-                    choicesContainerEl.style.display = 'none'; // Ocultar botones de elección
-                    calendarViewEl.style.display = 'flex'; // Mostrar el contenedor del calendario
-                    renderCalendar(new Date().getFullYear(), 9); // Octubre (mes 9 en JS)
-                    renderCalendar(new Date().getFullYear(), 10); // Noviembre (mes 10 en JS)
-                     const instructions = document.createElement('p');
-                    instructions.className = 'instructions-final';
-                    instructions.innerHTML = '<br>Cuando termines de seleccionar, <strong>SACA UNA CAPTURA DE PANTALLA</strong> de este calendario y envíala al grupo.<br>¡No hay vuelta atrás! Las siniestras eligirán la fecha y te la comunicarán a la brevedad';
-                    calendarViewEl.appendChild(instructions);
+                    choicesContainerEl.style.display = 'none'; 
+                    calendarViewEl.style.display = 'flex'; 
+                    const currentYear = new Date().getFullYear();
+                    renderCalendar(currentYear, 9); 
+                    renderCalendar(currentYear, 10); 
+                    
+                    const whatsappButton = document.createElement('button');
+                    whatsappButton.id = 'send-whatsapp-btn';
+                    whatsappButton.className = 'choice-button';
+                    whatsappButton.innerText = 'Confirmar y Enviar por WhatsApp';
+                    calendarViewEl.appendChild(whatsappButton);
+                    
+                    whatsappButton.onclick = sendWhatsAppMessage;
 
                 } else {
-                    choicesContainerEl.style.display = 'flex'; // Mostrar botones de elección
-                    calendarViewEl.style.display = 'none'; // Ocultar el calendario
-                    if (screenData.type !== 'end') { // Si no es una pantalla final con emoji
-                         screenData.choices.forEach(choice => {
-                            const button = document.createElement('button');
-                            button.className = 'choice-button';
-                            if (screenData.type === 'intro') {
-                                button.classList.add('start-button');
-                            }
-                            button.innerText = choice.text;
-                            button.onclick = () => handleChoice(choice);
-                            choicesContainerEl.appendChild(button);
-                        });
-                    }
+                    choicesContainerEl.style.display = 'flex'; 
+                    calendarViewEl.style.display = 'none'; 
+                    screenData.choices.forEach(choice => {
+                        const button = document.createElement('button');
+                        button.className = 'choice-button';
+                        button.onclick = () => handleChoice(choice, screenIndex);
+                        button.innerText = choice.text;
+                        choicesContainerEl.appendChild(button);
+                    });
                 }
                 
-                // Si es una pantalla final (que ya no tendremos con emoji, pero se mantiene la lógica)
-                if(screenData.type === 'end' && screenData.emoji) {
-                    const emojiEl = document.createElement('span');
-                    emojiEl.className = 'final-emoji';
-                    emojiEl.innerText = screenData.emoji;
-                    finalEmojiContainerEl.appendChild(emojiEl);
-                }
-
                 container.style.opacity = 1;
             }, 300);
         }
 
-        function handleChoice(choice) {
+        function handleChoice(choice, screenIndex) {
+            if (choice.keyword) {
+                userChoices[`situation${screenIndex}`] = choice.keyword;
+            }
+
             if (choice.target === 'error') {
                 feedbackMessageEl.innerText = choice.message;
                 feedbackMessageEl.style.opacity = 1;
@@ -352,19 +347,11 @@
         }
 
         function renderCalendar(year, month) {
-            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             const weekdays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const numDays = lastDay.getDate();
-            const startDayOfWeek = firstDay.getDay(); // 0 = Domingo, 1 = Lunes, etc.
-
             const monthDiv = document.createElement('div');
             monthDiv.className = 'month';
             monthDiv.innerHTML = `<h3>${monthNames[month]} ${year}</h3>`;
-
             const weekdaysDiv = document.createElement('div');
             weekdaysDiv.className = 'weekdays';
             weekdays.forEach(day => {
@@ -374,42 +361,70 @@
                 weekdaysDiv.appendChild(weekdayItem);
             });
             monthDiv.appendChild(weekdaysDiv);
-
             const daysDiv = document.createElement('div');
             daysDiv.className = 'days';
-
-            // Días vacíos al principio del mes
-            for (let i = 0; i < startDayOfWeek; i++) {
+            const firstDay = new Date(year, month, 1).getDay();
+            const numDays = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) {
                 const emptyDay = document.createElement('div');
                 emptyDay.className = 'day-item empty';
                 daysDiv.appendChild(emptyDay);
             }
-
-            // Días del mes
             for (let day = 1; day <= numDays; day++) {
                 const dayItem = document.createElement('div');
                 dayItem.className = 'day-item';
                 dayItem.innerText = day;
-                dayItem.dataset.date = `${year}-${month + 1}-${day}`; // Formato YYYY-MM-DD
-                
-                if (selectedDates.includes(dayItem.dataset.date)) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                dayItem.dataset.date = dateStr;
+                if (selectedDates.includes(dateStr)) {
                     dayItem.classList.add('selected');
                 }
-
                 dayItem.onclick = () => {
                     dayItem.classList.toggle('selected');
-                    const dateIndex = selectedDates.indexOf(dayItem.dataset.date);
+                    const dateIndex = selectedDates.indexOf(dateStr);
                     if (dateIndex > -1) {
-                        selectedDates.splice(dateIndex, 1); // Deseleccionar
+                        selectedDates.splice(dateIndex, 1);
                     } else {
-                        selectedDates.push(dayItem.dataset.date); // Seleccionar
+                        selectedDates.push(dateStr);
                     }
-                    console.log('Fechas seleccionadas:', selectedDates); // Para depuración
                 };
                 daysDiv.appendChild(dayItem);
             }
             monthDiv.appendChild(daysDiv);
             calendarViewEl.appendChild(monthDiv);
+        }
+
+        function sendWhatsAppMessage() {
+            if (selectedDates.length === 0) {
+                feedbackMessageEl.innerText = '¡No te olvides de seleccionar al menos una fecha!';
+                feedbackMessageEl.style.opacity = 1;
+                setTimeout(() => { feedbackMessageEl.style.opacity = 0; }, 3000);
+                return;
+            }
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const formattedDates = selectedDates.sort().map(dateStr => {
+                const date = new Date(dateStr + 'T00:00:00');
+                const day = date.getDate();
+                const month = monthNames[date.getMonth()];
+                return `${day} de ${month}`;
+            });
+
+            const choice1 = userChoices.situation1 || 'un poco de todo';
+            const choice2 = userChoices.situation2 || 'lo que venga';
+
+            let message = `Siniestras, acá su próxima víctima reportándose.\n\n`;
+            message += `Después de superar el interrogatorio digital al que me sometieron, por la presente informo mi disponibilidad y entrega absoluta para la experiencia.\n\n`;
+            message += `Como habrán visto en mis respuestas, pretendo ${choice1} y ${choice2}.\n\n`;
+            message += `Mis posibles fechas son:\n`;
+            formattedDates.forEach(date => {
+                message += `- ${date}\n`;
+            });
+            message += `\nElijan sabiamente y eviten llamar a Guille...\n\n`;
+            message += `Atentamente,\nSibi`;
+
+            const whatsappURL = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(whatsappURL, '_blank');
         }
         
         // Iniciar el juego
