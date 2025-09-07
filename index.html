@@ -26,7 +26,6 @@
             font-family: 'Fredoka', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            /* CAMBIO CLAVE: Se eliminan las propiedades flex para un control más simple */
         }
 
         .game-container {
@@ -38,7 +37,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
             transition: all 0.5s ease;
-            /* CAMBIO CLAVE: 'auto' centra horizontalmente y 5vh da margen arriba y abajo */
             margin: 5vh auto; 
         }
         
@@ -52,12 +50,6 @@
             font-size: 1.2rem;
             line-height: 1.6;
             margin-bottom: 30px;
-        }
-        
-        .final-emoji {
-            font-size: 5rem;
-            display: block;
-            margin-bottom: 20px;
         }
 
         .choices-container {
@@ -91,11 +83,11 @@
             border-bottom-width: 2px;
         }
         
-        .start-button, #send-whatsapp-btn {
+        .start-button, #send-whatsapp-btn, #need-dates-btn {
              background-color: var(--secondary-color);
         }
-        #send-whatsapp-btn {
-            margin-top: 20px;
+        #need-dates-btn {
+            background-color: #777;
         }
 
         #feedback-message {
@@ -154,21 +146,33 @@
             border: none;
             cursor: default;
         }
+        .day-item.disabled {
+            background-color: #f0f0f0;
+            color: #bbb;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+        .day-item.disabled:hover {
+            background-color: #f0f0f0;
+            color: #bbb;
+        }
         .day-item.selected {
             background-color: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .day-item:not(.empty):hover {
+        .day-item:not(.empty):not(.disabled):hover {
             background-color: var(--secondary-color);
             color: white;
         }
-        .instructions-final {
+        .final-buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
             margin-top: 20px;
-            font-size: 1.1rem;
-            color: var(--accent-color);
-            font-weight: 600;
+            width: 100%;
         }
 
 
@@ -221,10 +225,10 @@
         const feedbackMessageEl = document.getElementById('feedback-message');
         const calendarViewEl = document.getElementById('calendar-view');
 
-        let selectedDates = []; 
+        let selectedDates = new Set();
         let userChoices = {}; 
 
-        // --- CEREBRO DEL JUEGO: Aquí está toda la historia y las decisiones ---
+        // --- CEREBRO DEL JUEGO ---
         const gameData = [
             // Pantalla 0: Introducción
             {
@@ -237,10 +241,10 @@
             {
                 type: 'choice',
                 title: 'SITUACIÓN #1',
-                text: 'Después de una semana larguísima, llegas a tu casa y descubres una puerta que nunca antes habías visto. La abres y en el centro hay algo que te llama la atención. ¿Qué es?',
+                text: 'Después de una semana larguísima, de esas que te dejan el cerebro frito, llegas a tu casa y descubres una puerta que nunca antes habías visto en el living. La abres. El cuarto adentro es simple, pero en el centro hay algo que te llama poderosamente la atención. ¿Qué es?',
                 choices: [
-                    { text: 'Una bola de espejos escuchando "aaaay nena..."', target: 2, keyword: 'un poco de fiesta' },
-                    { text: 'Un sillón que susurra "sentate y contá todo..."', target: 2, keyword: 'mucha charla' },
+                    { text: 'Una bola de espejos escuchando "aaaay nena, a tu cola le falta crema…"', target: 2, keyword: 'un poco de fiesta' },
+                    { text: 'Un sillón que susurra "sentate y contá todo, tenemos tiempo"', target: 2, keyword: 'mucha charla' },
                     { text: 'Un jacuzzi y un masaje facial en absoluto silencio', target: 2, keyword: 'bastante relax' }
                 ]
             },
@@ -248,18 +252,18 @@
             {
                 type: 'choice',
                 title: 'SITUACIÓN #2',
-                text: 'Estás en medio de un sueño rarísimo. Te persigue algo (podría ser la boleta de UTE). Llegas al borde de un acantilado. ¿Qué haces?',
+                text: 'Estás en medio de un sueño rarísimo. Te persigue algo (podría ser la boleta de UTE). Llegas al borde de un acantilado altísimo. Abajo, hay un mar de un color turquesa intenso. Tienes tres opciones para escapar. ¿Qué haces?',
                 choices: [
                     { text: 'Correr a la velocidad de la luz por el borde', target: 3, keyword: 'escapar de todo' },
                     { text: 'Saltar al vacío y empezar a volar', target: 3, keyword: 'experimentar sin miedo' },
-                    { text: 'Zambullirte en el mar y nadar...', target: 3, keyword: 'entregarme a la situación' }
+                    { text: 'Zambullirte en el mar y nadar hacia una cueva', target: 3, keyword: 'entregarme a la situación' }
                 ]
             },
             // Pantalla 3: Situación #3
             {
                 type: 'choice',
                 title: 'SITUACIÓN #3',
-                text: 'Una botella llega a la orilla. Adentro hay un papelito que dice: "Sé tu secreto: sigues llevando la cuenta de quién no sabe pagar la luz, el agua y el gas". ¿Qué hacés?',
+                text: 'Una botella llega a la orilla. Adentro hay un papelito que dice: "Sé tu secreto: sigues llevando la cuenta de quién no sabe pagar la luuu, el agua y el gas". ¿Qué hacés?',
                 choices: [
                     { text: 'Salir corriendo, ¡me han descubierto!', target: 4 },
                     { text: 'Escribir "ok, ahora contame uno tuyo" y devolverla', target: 4 },
@@ -277,11 +281,11 @@
                     { text: 'Bua... claramente no voy a poder zafar... Por lo menos elijo la fecha...', target: 5 }
                 ]
             },
-            // Pantalla 5: ¡VERSIÓN CON CALENDARIO Y BOTÓN DE WHATSAPP!
+            // Pantalla 5: Calendario
             {
                 type: 'calendar',
                 title: 'TU AGENDA SINIESTRA',
-                text: '¡Esa es la actitud! Has superado las pruebas. Ahora, con tu "coronita", selecciona en el calendario los días de Octubre y Noviembre en los que tendrías <strong>realmente disponibilidad</strong> para tu experiencia. Selecciona todos los que te sirvan.',
+                text: '¡Esa es la actitud! Has superado las pruebas. Ahora, con tu coronita, selecciona en el calendario los <strong>fines de semana</strong> de Octubre y Noviembre en los que tendrías <strong>realmente disponibilidad</strong> para tu experiencia. Selecciona todos los que te sirvan.'
             }
         ];
 
@@ -301,17 +305,29 @@
                 if (screenData.type === 'calendar') {
                     choicesContainerEl.style.display = 'none'; 
                     calendarViewEl.style.display = 'flex'; 
-                    const currentYear = new Date().getFullYear();
-                    renderCalendar(currentYear, 9); 
-                    renderCalendar(currentYear, 10); 
+                    const currentYear = 2025;
+                    renderCalendar(currentYear, 9);
+                    renderCalendar(currentYear, 10);
                     
+                    const buttonsContainer = document.createElement('div');
+                    buttonsContainer.className = 'final-buttons-container';
+
+                    const helpButton = document.createElement('button');
+                    helpButton.id = 'need-dates-btn';
+                    helpButton.className = 'choice-button';
+                    helpButton.innerText = 'No puedo ninguno :(, necesito más fechas';
+                    buttonsContainer.appendChild(helpButton);
+
                     const whatsappButton = document.createElement('button');
                     whatsappButton.id = 'send-whatsapp-btn';
                     whatsappButton.className = 'choice-button';
                     whatsappButton.innerText = 'Confirmar y Enviar por WhatsApp';
-                    calendarViewEl.appendChild(whatsappButton);
+                    buttonsContainer.appendChild(whatsappButton);
+                    
+                    calendarViewEl.appendChild(buttonsContainer);
                     
                     whatsappButton.onclick = sendWhatsAppMessage;
+                    helpButton.onclick = sendHelpMessage;
 
                 } else {
                     choicesContainerEl.style.display = 'flex'; 
@@ -324,7 +340,6 @@
                         choicesContainerEl.appendChild(button);
                     });
                 }
-                
                 container.style.opacity = 1;
             }, 300);
         }
@@ -333,13 +348,10 @@
             if (choice.keyword) {
                 userChoices[`situation${screenIndex}`] = choice.keyword;
             }
-
             if (choice.target === 'error') {
                 feedbackMessageEl.innerText = choice.message;
                 feedbackMessageEl.style.opacity = 1;
-                setTimeout(() => {
-                    feedbackMessageEl.style.opacity = 0;
-                }, 3000);
+                setTimeout(() => { feedbackMessageEl.style.opacity = 0; }, 3000);
             } else {
                 currentScreen = choice.target;
                 renderScreen(currentScreen);
@@ -347,8 +359,9 @@
         }
 
         function renderCalendar(year, month) {
-            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            const weekdays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            // ¡NUEVO ORDEN DE DÍAS!
+            const weekdays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
             const monthDiv = document.createElement('div');
             monthDiv.className = 'month';
             monthDiv.innerHTML = `<h3>${monthNames[month]} ${year}</h3>`;
@@ -363,52 +376,94 @@
             monthDiv.appendChild(weekdaysDiv);
             const daysDiv = document.createElement('div');
             daysDiv.className = 'days';
-            const firstDay = new Date(year, month, 1).getDay();
-            const numDays = new Date(year, month + 1, 0).getDate();
-            for (let i = 0; i < firstDay; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'day-item empty';
-                daysDiv.appendChild(emptyDay);
+            
+            // ¡NUEVA LÓGICA PARA EL PRIMER DÍA!
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // Domingo=0, Lunes=1...
+            // Ajustamos para que Lunes sea el primer día (índice 0)
+            const daysToShift = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1;
+
+            for (let i = 0; i < daysToShift; i++) {
+                daysDiv.appendChild(document.createElement('div')).className = 'day-item empty';
             }
+            
+            const numDays = new Date(year, month + 1, 0).getDate();
             for (let day = 1; day <= numDays; day++) {
                 const dayItem = document.createElement('div');
                 dayItem.className = 'day-item';
                 dayItem.innerText = day;
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay();
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 dayItem.dataset.date = dateStr;
-                if (selectedDates.includes(dateStr)) {
+
+                // Domingo es 0, Sábado es 6
+                if (dayOfWeek !== 6 && dayOfWeek !== 0) {
+                    dayItem.classList.add('disabled');
+                } else {
+                    dayItem.onclick = () => handleWeekendClick(date);
+                }
+                
+                if (selectedDates.has(dateStr)) {
                     dayItem.classList.add('selected');
                 }
-                dayItem.onclick = () => {
-                    dayItem.classList.toggle('selected');
-                    const dateIndex = selectedDates.indexOf(dateStr);
-                    if (dateIndex > -1) {
-                        selectedDates.splice(dateIndex, 1);
-                    } else {
-                        selectedDates.push(dateStr);
-                    }
-                };
                 daysDiv.appendChild(dayItem);
             }
             monthDiv.appendChild(daysDiv);
             calendarViewEl.appendChild(monthDiv);
         }
 
+        function handleWeekendClick(date) {
+            const dayOfWeek = date.getDay();
+            let satDate, sunDate;
+
+            if (dayOfWeek === 6) {
+                satDate = date;
+                sunDate = new Date(date);
+                sunDate.setDate(date.getDate() + 1);
+            } else {
+                sunDate = date;
+                satDate = new Date(date);
+                satDate.setDate(date.getDate() - 1);
+            }
+
+            const satStr = `${satDate.getFullYear()}-${String(satDate.getMonth() + 1).padStart(2, '0')}-${String(satDate.getDate()).padStart(2, '0')}`;
+            const sunStr = `${sunDate.getFullYear()}-${String(sunDate.getMonth() + 1).padStart(2, '0')}-${String(sunDate.getDate()).padStart(2, '0')}`;
+
+            const satEl = document.querySelector(`[data-date="${satStr}"]`);
+            const sunEl = document.querySelector(`[data-date="${sunStr}"]`);
+            
+            if (selectedDates.has(satStr)) {
+                selectedDates.delete(satStr);
+                selectedDates.delete(sunStr);
+                if(satEl) satEl.classList.remove('selected');
+                if(sunEl) sunEl.classList.remove('selected');
+            } else {
+                selectedDates.add(satStr);
+                selectedDates.add(sunStr);
+                if(satEl) satEl.classList.add('selected');
+                if(sunEl) sunEl.classList.add('selected');
+            }
+        }
+
         function sendWhatsAppMessage() {
-            if (selectedDates.length === 0) {
-                feedbackMessageEl.innerText = '¡No te olvides de seleccionar al menos una fecha!';
+            if (selectedDates.size === 0) {
+                feedbackMessageEl.innerText = '¡No te olvides de seleccionar al menos un fin de semana!';
                 feedbackMessageEl.style.opacity = 1;
                 setTimeout(() => { feedbackMessageEl.style.opacity = 0; }, 3000);
                 return;
             }
 
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            const formattedDates = selectedDates.sort().map(dateStr => {
-                const date = new Date(dateStr + 'T00:00:00');
-                const day = date.getDate();
-                const month = monthNames[date.getMonth()];
-                return `${day} de ${month}`;
-            });
+            const sortedDates = Array.from(selectedDates).sort();
+            
+            let formattedWeekends = [];
+            for (let i = 0; i < sortedDates.length; i += 2) {
+                const sat = new Date(sortedDates[i] + 'T00:00:00');
+                const sun = new Date(sortedDates[i+1] + 'T00:00:00');
+                // Comprobación para evitar errores si las fechas no están en el mismo mes
+                const monthName = sat.getMonth() === sun.getMonth() ? monthNames[sat.getMonth()] : `${monthNames[sat.getMonth()]}/${monthNames[sun.getMonth()]}`;
+                formattedWeekends.push(`${sat.getDate()} y ${sun.getDate()} de ${monthName}`);
+            }
 
             const choice1 = userChoices.situation1 || 'un poco de todo';
             const choice2 = userChoices.situation2 || 'lo que venga';
@@ -416,13 +471,19 @@
             let message = `Siniestras, acá su próxima víctima reportándose.\n\n`;
             message += `Después de superar el interrogatorio digital al que me sometieron, por la presente informo mi disponibilidad y entrega absoluta para la experiencia.\n\n`;
             message += `Como habrán visto en mis respuestas, pretendo ${choice1} y ${choice2}.\n\n`;
-            message += `Mis posibles fechas son:\n`;
-            formattedDates.forEach(date => {
-                message += `- ${date}\n`;
+            message += `Mis fines de semana posibles son:\n`;
+            formattedWeekends.forEach(weekend => {
+                message += `- ${weekend}\n`;
             });
             message += `\nElijan sabiamente y eviten llamar a Guille...\n\n`;
             message += `Atentamente,\nSibi`;
 
+            const whatsappURL = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            window.open(whatsappURL, '_blank');
+        }
+        
+        function sendHelpMessage() {
+            let message = `¡Siniestras! Emergencia de agenda 🆘\n\nNinguno de los fines de semana de Octubre/Noviembre me sirve para la experiencia.\n\n¡Necesito más opciones! Activen el plan B.`;
             const whatsappURL = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
             window.open(whatsappURL, '_blank');
         }
